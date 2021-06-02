@@ -1,4 +1,4 @@
-a{
+{
   [ "mekanism:reinforcedplasticblock:13" ] = {
     count = 4,
     ingredients = {
