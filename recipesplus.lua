@@ -1,7 +1,8 @@
 local USER_DIR = "/disk2/usr/etc/"
 
-local i = {...}
-if #i < 1 then return printError("[RBM] insufficient information.") end
+local i = {}
+
+local run = true
 local c = function(t) print("[RBM] "..t) end
 local failed = function(reason) printError("failed to get/create pack. ("..reason..")") error() end
 
@@ -24,7 +25,7 @@ end
 
 local cmd = {
 	["get"] = function()
-		if not i[2] then return printError("[RBM] invalid input.") end
+		if not i[2] then return printError("[RBM] usage: get <raw pack url>") end
 		c("Getting pack...")
 		if not http then return failed("http is disabled") end
 		local h = http.get(i[2])
@@ -33,7 +34,7 @@ local cmd = {
 		install(a)
 	end,
 	["create"] = function()
-		if not i[2] then return printError("[RBM] invalid input.") end
+		if not i[2] then return printError("[RBM] usage: create <name>") end
 		c("Creating pack...")
 		local tbl = {}
 		tbl.names = textutils.unserialize(getFile(USER_DIR.."/names/"..i[2]..".db"))
@@ -42,10 +43,40 @@ local cmd = {
 		c("Created pack.")
 	end,
 	["install"] = function()
-		if not i[2] then return printError("[RBM] invalid input.") end
+		if not i[2] then return printError("[RBM] usage: install <pack>") end
 		c("Installing pack...")
 		install(textutils.unserialize(getFile(i[2])))
-	end
+	end,
+	["exportnames"] = function()
+		if not i[2] then return printError("[RBM] usage: exportnames <modfilter>") end
+		c("Exporting names...")
+		data = getFile("/usr/config/items.db", "r")
+		local a, b, d = {}, "", 0
+		for w in string.gmatch(data, '%b""', "") do
+			if b == "" then
+				b = string.gsub(w,'"','')
+			else
+				if string.find(b, i[2]) ~= nil then
+					a[b] = string.gsub(w,'"','') d=d+1
+				end
+				b = ""
+			end
+		end
+		local f = fs.open("/data/out.lua", "w") f.write(textutils.serialize(a)) f.close()
+		c("Complete! ("..d.." names exported)")
+	end,
+	["clear"] = term.clear,
+	["clr"] = term.clear,
+	["exit"] = function() run = false end,
 }
 
-cmd[i[1]]()
+--cmd[i[1]]()
+
+while run do
+	write("rb+> ")
+	i = {}
+	for w in string.gmatch(read(), '%S+') do
+		table.insert(i,w)
+	end
+	if not cmd[i[1]] then print("no such command.") else cmd[i[1]]() end
+end
