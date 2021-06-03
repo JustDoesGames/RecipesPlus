@@ -17,8 +17,8 @@ local function install(a)
 	if not a.names or not a.recipes then return printError("invalid pack") end
 	if not a.recipes.name or not a.recipes.version then return printError("invalid pack: name/version") end
 	if fs.exists(USER_DIR.."/names/"..a.recipes.name:lower()..".db") or fs.exists(USER_DIR.."/recipes/"..a.recipes.name:lower()..".db") then return printError("pack already exists") end
-	local f = fs.open(USER_DIR.."/names/"..a.recipes.name:lower()..".db", "w") f.write(textutils.serialize(a.names)) f.close()
-	local f = fs.open(USER_DIR.."/recipes/"..a.recipes.name:lower()..".db", "w") f.write(textutils.serialize(a.recipes)) f.close()
+	local f = fs.open(USER_DIR.."/names/"..a.recipes.name:lower():gsub(" ","")..".db", "w") f.write(textutils.serialize(a.names)) f.close()
+	local f = fs.open(USER_DIR.."/recipes/"..a.recipes.name:lower():gsub(" ","")..".db", "w") f.write(textutils.serialize(a.recipes)) f.close()
 	c("Installed '"..a.recipes.name.."'!")
 end
 
