@@ -1,7 +1,7 @@
 local USER_DIR = "/disk2/usr/etc/"
-
+--[[
 local i = {...}
-if #i < 1 then return printError("[RBM] insufficient information.") end
+if #i < 1 then return printError("[RBM] insufficient information.") end --]]
 local c = function(t) print("[RBM] "..t) end
 local failed = function(reason) printError("failed to get/create pack. ("..reason..")") error() end
 
@@ -48,4 +48,9 @@ local cmd = {
 	end
 }
 
-cmd[i[1]]()
+--cmd[i[1]]()
+
+while true do
+	local a = read()
+	if not cmd[a] then print("Invalid command.") else cmd[a]() end
+end
