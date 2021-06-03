@@ -1,10 +1,3 @@
---[[
-local f = fs.open("/data/rbmanager/testpack.lua", "r")
-local a = textutils.serialize(f.readAll()) f.close()
-error(a)
-error()
---]]
-
 local USER_DIR = "/disk2/usr/etc/"
 
 local i = {...}
