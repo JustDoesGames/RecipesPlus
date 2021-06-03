@@ -32,6 +32,15 @@ local cmd = {
 		local a = textutils.unserialize(h.readAll()) or {} h.close()
 		install(a)
 	end,
+	["grab"] = function()
+		if not i[2] then return printError("[RBP] usage: grab <pack name>") end
+		i[2] = i[2]:lower():gsub(" ","")
+		if not http then return printError("[RBP] http is disabled") end
+		local h = http.get("https://raw.githubusercontent.com/JustDoesGames/RecipesPlus/main/packs/"..i[2]..".lua")
+		if not h then return printError("[RBP] unable to find '"..i[2].."'.") end
+		local a = textutils.unserialize(h.readAll()) or {} h.close()
+		install(a)
+	end,
 	["create"] = function()
 		if not i[2] then return printError("[RBP] usage: create <name>") end
 		c("Creating pack...")
