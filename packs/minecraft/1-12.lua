@@ -1621,8 +1621,8 @@
         },
       },
     },
-    name = "Minecraft-1.12",
-    version = "MC 1.12",
+    name = "MC-1.12",
+    version = "1.12",
   },
   names = {},
 }
