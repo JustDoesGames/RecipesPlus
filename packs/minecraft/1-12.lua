@@ -1621,7 +1621,7 @@
         },
       },
     },
-    name = "MC_1-12",
+    name = "minecraft_1-12",
     version = "1.12",
   },
   names = {},
