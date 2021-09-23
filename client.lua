@@ -25,6 +25,10 @@ local list = {
 		name = "minecraft_1-12",
 		link = "minecraft/1-12",
 	},
+	{
+		name = "cc-tweaked",
+		link = "computercraft/cc-tweaked",
+	},
 }
 
 -- R++ API --
