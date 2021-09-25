@@ -31,13 +31,15 @@
 				link = "computercraft/cc-tweaked",
 				fs_name = "cc-tweaked"
 			}
-		},
-  {
-    name = "Iron Chest",
-    view = {
-      name = "Iron Chest",
-      link = "ironchest/ironchest",
-      fs_name = "ironchest"
-    }
-  }
+		}
 	},
+	{
+		name = "Iron Chest",
+		view = {
+			{
+				name = "Iron Chest",
+				link = "ironchest/ironchest",
+				fs_name = "ironchest"
+			}
+		}
+	}
