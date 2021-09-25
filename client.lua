@@ -23,43 +23,9 @@ local cols = {
 local install_dir = "/usr/etc/" -- Important
 local github_link = "https://raw.githubusercontent.com/JustDoesGames/RecipesPlus/main/packs/"
 
-local nav = {
-	{
-		name = "Mekanism",
-		view = {
-			{
-				name = "Mekanism",
-				link = "mekanism/mekanism",
-				fs_name = "mekanism"
-			},
-			{
-				name = "Mekanism: Generators",
-				link = "mekanism/mekanismgenerators",
-				fs_name = "mekanismgenerators"
-			}
-		},
-	},
-	{
-		name = "Minecraft",
-		view = {
-			{
-				name = "Minecraft 1.12",
-				link = "minecraft/1-12",
-				fs_name = "minecraft_1-12"
-			}
-		}
-	},
-	{
-		name = "Computercraft",
-		view = {
-			{
-				name = "Computercraft: Tweaked",
-				link = "computercraft/cc-tweaked",
-				fs_name = "cc-tweaked"
-			}
-		}
-	},
-}
+local web = http.get("https://raw.githubusercontent.com/JustDoesGames/RecipesPlus/main/packlist.lua")
+if not web then return pe("Failed to obtain packlist from Github.") end
+nav = textutils.unserialize(web.readAll()) web.close()
 nav.items = (hi-1)/3 -- max options on screen
 nav.scroll = 0
 nav.active = nav
