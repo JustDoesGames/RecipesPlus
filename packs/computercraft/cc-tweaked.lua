@@ -385,7 +385,7 @@
         count = 1,
       },
     },
-    name = "computercraft",
+    name = "cc-tweaked",
     version = "MC 1.12",
   },
   names = {
