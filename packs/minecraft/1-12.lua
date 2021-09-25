@@ -1624,5 +1624,5 @@
     name = "minecraft_1-12",
     version = "1.12",
   },
-  names = {["minecraft:0"] = "Non information avaliable"},
+  names = {},
 }
