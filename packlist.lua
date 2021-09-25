@@ -31,6 +31,11 @@
 				name = "Computercraft: Tweaked",
 				link = "computercraft/cc-tweaked",
 				fs_name = "cc-tweaked"
+			},
+			{
+				name = "Plethora",
+				link = "computercraft/plethora",
+				fs_name = "plethora"
 			}
 		}
 	},
@@ -43,5 +48,5 @@
 				fs_name = "ironchest"
 			}
 		}
-	}
+	},
 }
