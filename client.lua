@@ -1,8 +1,9 @@
--- GUI for R++ --
+-- GUI for R+ --
 -- Koga --
 
 -- Init --
 if not term.isColor() then return printError("Advanced Computer Required.") end
+if not http then return printError("Http is not enabled.") end
 local wi,hi = term.getSize()
 local t = term
 
@@ -11,27 +12,63 @@ local w, p, pe = write, print, printError
 
 
 -- Variables --
-local install_dir = "/usr/etc/" -- Important
-local list = {
-	{
-		name = "mekanism",
-		link = "mekanism/mekanism",
-	},
-	{
-		name = "mekanismgenerators",
-		link = "mekanism/mekanismgenerators",
-	},
-	{
-		name = "minecraft_1-12",
-		link = "minecraft/1-12",
-	},
-	{
-		name = "cc-tweaked",
-		link = "computercraft/cc-tweaked",
-	},
+local cols = {
+	["fg_0"] = colors.cyan,
+	["tx_0"] = colors.gray,
+	["tx_1"] = colors.lightGray,
+	["tx_2"] = colors.white,
+	["tx_3"] = colors.white,
 }
 
--- R++ API --
+local install_dir = "/usr/etc/" -- Important
+local github_link = "https://raw.githubusercontent.com/JustDoesGames/RecipesPlus/main/packs/"
+
+local nav = {
+	{
+		name = "Mekanism",
+		view = {
+			{
+				name = "Mekanism",
+				link = "mekanism/mekanism",
+				fs_name = "mekanism"
+			},
+			{
+				name = "Mekanism: Generators",
+				link = "mekanism/mekanismgenerators",
+				fs_name = "mekanismgenerators"
+			}
+		},
+	},
+	{
+		name = "Minecraft",
+		view = {
+			{
+				name = "Minecraft 1.12",
+				link = "minecraft/1-12",
+				fs_name = "minecraft_1-12"
+			}
+		}
+	},
+	{
+		name = "Computercraft",
+		view = {
+			{
+				name = "Computercraft: Tweaked",
+				link = "computercraft/cc-tweaked",
+				fs_name = "cc-tweaked"
+			}
+		}
+	},
+}
+nav.items = (hi-1)/3 -- max options on screen
+nav.scroll = 0
+nav.active = nav
+
+local loaded_pack, loaded_pack_raw, loaded_pack_recipes
+local pack_scroll = 0
+
+
+-- R+ API --
 local function getFile(dir)
 	if not fs.exists(dir) then pe("file doesn't exist: "..dir) error("") end
 	local f = fs.open(dir, "r")
@@ -46,7 +83,7 @@ local function install(a)
 	if fs.exists(install_dir.."/names/"..a.recipes.name:lower()..".db") or fs.exists(install_dir.."/recipes/"..a.recipes.name:lower()..".db") then return pe("pack already exists") end
 	local f = fs.open(install_dir.."/names/"..a.recipes.name:lower():gsub(" ","")..".db", "w") f.write(textutils.serialize(a.names)) f.close()
 	local f = fs.open(install_dir.."/recipes/"..a.recipes.name:lower():gsub(" ","")..".db", "w") f.write(textutils.serialize(a.recipes)) f.close()
-	w("Installed '"..a.recipes.name.."'!")
+	--w("Installed '"..a.recipes.name.."'!")
 end
 
 local i = {}
@@ -122,7 +159,7 @@ local cmd = {
 	end,
 	["install"] = function()
 		if not i[2] then return pe("[RBM] usage: install <pack>") end
-		w("Installing pack...")
+		--w("Installing pack...")
 		install(textutils.unserialize(getFile(i[2])))
 	end,
 	["exportn"] = function()
@@ -171,6 +208,7 @@ local cmd = {
 
 
 -- Functions --
+--[[
 local doInstall = function(a)
 	paintutils.drawFilledBox(1,2,wi-1,hi-1,colors.black)
 	cp(1,2)
@@ -184,31 +222,115 @@ local doInstall = function(a)
 	end
 	sleep(1) cp(1,4) w("Press any key to continue.") os.pullEvent("key") sleep(.2)
 end
+--]]
+local drawBase = function()
+	sb(cols["fg_0"]) clr() cp((wi/2)-("Press 'Q' to exit"):len()/2,1) st(cols["tx_0"]) w("Press 'Q' to exit") cp(1,1) st(cols["tx_2"]) w(string.char(17))
+end
 
-local display = function()
-	local new, cursor = true, 1
-	local dis = function()
-		if new then new = false
-			sb(colors.cyan) clr() cp((wi/2)-("Press 'Q' to exit"):len()/2,hi) st(colors.black) w("Press 'Q' to exit")
-			paintutils.drawLine(1,1,wi,1,colors.white)
-			paintutils.drawFilledBox(1,2,wi-1,hi-1, colors.black)
-			st(colors.white) sb(colors.black)
+local drawUpdate = true
+local draw = function(screen, ...)
+	local args = {...}
+	if drawUpdate then drawUpdate = false drawBase() end
+	if screen == "doNav" then
+		local t, t2= {colors.gray, colors.lightGray}, 1
+		for i=1, math.min(#nav.active, nav.items) do
+			paintutils.drawLine(wi-1,((i-1)*3)+2,wi-1,((i-1)*3)+4, t[t2]) t2=t2+1 if t2 > #t then t2=1 end
+			paintutils.drawFilledBox(1,((i-1)*3)+2,wi-2,((i-1)*3)+4, colors.black)
+			cp(1,((i-1)*3)+3,wi-2) st(cols["tx_1"]) w(nav.active[i+nav.scroll].name)
 		end
-		cp(1,2) p("R++") st(colors.gray) p(install_dir.."\n") st(colors.white) for i=1, #list do if fs.exists(install_dir.."names/"..list[i].name..".db") then write(string.char(7).." ") else write("- ") end p(i==cursor and string.char(16).." "..list[i].name.."  " or list[i].name.."  ") end
+	elseif screen == "viewPack" then
+		if args[2] then -- update whole screen
+			sb(cols["fg_0"]) cp(1,hi-2) st(colors.orange) p(args[1].name)
+			st(colors.white) p("Size: "..textutils.serialize(loaded_pack_raw):len()/(1000).." kb | Recipes: "..loaded_pack_recipes)
+			st(cols["tx_3"]) sb(colors.black) cp(1,2)
+			if fs.exists(install_dir.."names/"..args[1].fs_name..".db") then
+				paintutils.drawFilledBox(wi-11,hi-2,wi-1,hi-1,colors.gray)
+				cp(wi-10,hi-1) w("Uninstall")
+			else
+				paintutils.drawFilledBox(wi-11,hi-2,wi-1,hi-1,colors.green)
+				cp(wi-9,hi-1) w("Install")
+			end
+			-- Storage Space on PC --
+			local total = fs.getCapacity("")
+			local used = fs.getFreeSpace("")
+			paintutils.drawLine(1,hi,wi,hi,colors.gray) cp(1,hi)
+			st(colors.yellow) for i=1, math.min(math.ceil(wi/(total/(used+textutils.serialize(loaded_pack_raw):len()))),wi-1) do w(string.char(127)) end cp(1,hi)
+			st(colors.lightGray) for i=1, math.min(math.ceil(wi/(total/used)),wi-1) do w(string.char(127)) end
+		end
+		paintutils.drawFilledBox(1,2,wi-1,hi-3,colors.black) cp(1,2)
+		for i=1, math.min(hi-4, #loaded_pack) do
+			p(loaded_pack[i+pack_scroll].name)
+		end
+	elseif screen == "doInstallScreen" then
+		--
+	elseif screen == "doInstall" then
+		--
 	end
-	while true do
-		dis()
-		a,b = os.pullEvent("key")
-		if b == keys.up or b == keys.w then
-			if cursor == 1 then cursor = #list else cursor = cursor-1 end
-		elseif b == keys.down or b == keys.s then
-			if cursor == #list then cursor = 1 else cursor = cursor+1 end
-		elseif b == keys.enter or b == keys.e then
-			doInstall(list[cursor]) new = true
-		elseif b == keys.q then
-			break
+end
+
+local loadPack = function(link)
+	pack_scroll = 0
+	loaded_pack_recipes = 0
+	local web = http.get(link)
+	if web then
+		loaded_pack_raw = textutils.unserialize(web.readAll()) web.close()
+		loaded_pack = textutils.serialize(loaded_pack_raw.names)
+		local filtered_names = {}
+		local t1 = false
+		paintutils.drawLine(1,2,wi-1,2,colors.gray)
+		for ww in string.gmatch(loaded_pack, '%b""', "") do
+			loaded_pack_recipes = loaded_pack_recipes+1
+			ww = string.sub(ww, 2,ww:len()-1)
+			if t1 then
+				filtered_names[#filtered_names].name = ww t1=false
+			else
+				filtered_names[#filtered_names+1] = {item_id=ww} t1=true
+			end
+		end
+		loaded_pack = filtered_names
+		loaded_pack_recipes = loaded_pack_recipes/2
+		return true
+	else
+		return false
+	end
+end
+
+local viewPack = function(pack)
+	local update = true
+	drawBase() paintutils.drawFilledBox(1,2,wi-1,hi-3,colors.black)
+	if not loadPack(github_link..pack.link..".lua") then
+		paintutils.drawFilledBox(1,2,wi-1,hi,colors.black) cp(1,2) pe("Failed to obtain pack info.") sleep(3)
+	else
+		drawUpdate = true 
+		while true do
+			draw("viewPack", pack, update) update = false
+			a,b,x,y = os.pullEvent()
+			if a == "mouse_scroll" then
+				pack_scroll = math.max(0,math.min(pack_scroll+b, loaded_pack_recipes-(hi-4)))
+			elseif a == "mouse_click" then
+				if x == 1 and y == 1 then
+					break
+				elseif x >= wi-11 and x <= wi-1 and y >= hi-2 and y <= hi-1 then
+					if fs.exists(install_dir.."names/"..pack.fs_name..".db") then -- uninstall
+						fs.delete(install_dir.."names/"..pack.fs_name..".db")
+						fs.delete(install_dir.."recipes/"..pack.fs_name..".db") update = true
+					else -- install
+						install(loaded_pack_raw) update = true
+					end
+				end
+			elseif a == "key" then
+				if b == keys.q then break end
+			end
 		end
 	end
+end
+
+local doInstall = function()
+	--
+end
+
+local doInstallScreen = function()
+	--
 end
 
 
@@ -217,7 +339,27 @@ end
 
 local start = function()
 	st(colors.white) sb(colors.black) clr() cp(1,1) write("R++ initiating...") sleep(.1)
-	display()
+	while true do
+		draw("doNav")
+		a,b,x,y = os.pullEvent()
+		if a == "mouse_scroll" then
+			nav.scroll = math.max(0,math.min((nav.scroll+b), #nav.active-nav.items))
+		elseif a == "mouse_click" then
+			if x < wi and y > 1 and (y-1)/3 <= #nav.active then
+				if nav.active[math.ceil((y-1)/3)+nav.scroll].view then
+					nav.active, nav.scroll = nav.active[math.ceil((y-1)/3)+nav.scroll].view,0 drawUpdate = true
+				elseif nav.active[math.ceil((y-1)/3)+nav.scroll].link then
+					viewPack(nav.active[math.ceil((y-1)/3)+nav.scroll]) drawUpdate = true
+				end
+			elseif x == 1 and y == 1 then
+				nav.active = nav drawUpdate = true
+			end
+		elseif a == "key" then
+			if b == keys.q then
+				break
+			end
+		end
+	end
 end
 start()
 
